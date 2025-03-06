@@ -1,24 +1,28 @@
+import 'dart:async';
+
 import 'package:bloc_todo/models/todo.dart';
+import 'package:rxdart/subjects.dart';
 
 class TodoStorage {
-  List<Todo> todoList = [];
+  static final TodoStorage instance = TodoStorage();
 
-  Future<List<Todo>> fetch() {
-    return Future<List<Todo>>.delayed(Duration(seconds: 3), () {
-      todoList.add(Todo(todo: 'todo 1'));
-      todoList.add(Todo(todo: 'todo 2'));
-      todoList.add(Todo(todo: 'todo 3'));
-      todoList.add(Todo(todo: 'todo 4'));
-      todoList.add(Todo(todo: 'todo 5'));
-      return todoList;
-    });
-  }
+  final List<Todo> _todoList = [];
+  final BehaviorSubject<List<Todo>> _todoListSubject = BehaviorSubject.seeded(
+    [],
+  );
+
+  Stream<List<Todo>> get todoList => _todoListSubject.stream;
 
   void add(Todo todo) {
-    todoList.add(todo);
+    _todoList.add(todo);
+    _todoListSubject.sink.add(_todoList);
   }
 
   void remove(Todo todo) {
-    todoList.remove(todo);
+    _todoList.remove(todo);
+    if (_todoListSubject.isClosed) {
+      return;
+    }
+    _todoListSubject.sink.add(_todoList);
   }
 }
